@@ -7,7 +7,6 @@
 #include <sys/mman.h>
 #include <assert.h>
 #include <stdbool.h>
-#include <stdio.h>
 
 
 #define MIN_LEVEL 3
@@ -122,6 +121,18 @@ void *buddy_alloc(size_t len) {
     return smallest + 1;
 }
 
+void buddy_free(void *ptr) {
+    if (ptr == NULL) {
+        return;
+    }
+    head_t *head = (head_t *) ptr - 1;
+    head->taken = false;
+    while (head->level < PAGE_LEVEL && !get_buddy(head)->taken) {
+        head = merge(head);
+        head->taken = false;
+    }
+}
+
 void buddy_test() {
     // util functions
 
@@ -172,6 +183,7 @@ void buddy_test() {
     int *ints[10];
     for (int i = 0; i < 10; i++) {
         ints[i] = buddy_alloc(sizeof(int));
+        assert(ints[i] != NULL);
         *ints[i] = i;
         for (int j = 0; j < i; j++) {
             // test for no overlapping memory
@@ -179,8 +191,44 @@ void buddy_test() {
         }
     }
 
+    char *chars[10000];
     for (int i = 0; i < 10000; i++) {
         // test for no SEGFAULT
-        buddy_alloc(sizeof(int));
+        chars[i] = buddy_alloc(sizeof(char));
+    }
+
+    // free
+
+    for (int i = 0; i < 10; i++) {
+        buddy_free(ints[i]);
+    }
+    for (int i = 0; i < 10000; i++) {
+        buddy_free(chars[i]);
+    }
+
+    assert(PAGE_LEN >= 4096);
+    void *diff_sizes[10];
+    for (int i = 0; i < 10; i++) {
+        int size = 1 << i;
+        diff_sizes[i] = buddy_alloc(size);
+        char *char_ptr = diff_sizes[i];
+        for (int j = 0; j < size; j++) {
+            char_ptr[j] = (char) j;
+        }
+        assert(diff_sizes[i] != NULL);
+        for (int k = 0; k < 1000; k++) {
+            void *temp = buddy_alloc(size);
+            assert(temp != NULL);
+            buddy_free(temp);
+        }
+    }
+
+    for (int i = 0; i < 10; i++) {
+        int size = 1 << i;
+        char *char_ptr = diff_sizes[i];
+        for (int j = 0; j < size; j++) {
+            assert(char_ptr[j] == (char) j);
+        }
+        buddy_free(diff_sizes[i]);
     }
 }
