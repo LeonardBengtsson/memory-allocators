@@ -11,7 +11,7 @@
 typedef struct {
     void *pool;
     size_t el_len;
-    short first;
+    short first_index;
 } pool_alloc_t;
 
 pool_alloc_t new_pool_alloc(size_t el_len);
