@@ -5,4 +5,6 @@ set(CMAKE_C_STANDARD 17)
 
 add_executable(leben_allocators main.c
         buddy.c
-        buddy.h)
+        buddy.h
+        pool.c
+        pool.h)
