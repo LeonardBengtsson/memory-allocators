@@ -24,3 +24,8 @@ Setup CMake: `cmake -B build/`
 
 Run tests: `cmake --build build/ && build/leben-allocators`
 
+## Future developments
+
+Both the buddy allocator and the pool allocator are currently limited to a memory region of one page (4 kiB). They could both be improved by allowing for using multiple pages, and optionally, using 'huge' pages (2 MiB) to facilitate larger allocation sizes.
+
+The buddy allocator could also be refactored to use a `buddy_alloc_t` struct to contain an instance of an allocator, instead of the current implementation which uses a single global pointer.
