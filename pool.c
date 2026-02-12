@@ -107,7 +107,7 @@ pool_block_t *consume_first_block(pool_alloc_t *pool_alloc) {
     return first;
 }
 
-void release_block(pool_alloc_t *pool_alloc, void *block) {
+void release_block(pool_alloc_t *pool_alloc, pool_block_t *block) {
     pool_block_t *new_first = block;
     short new_first_index = get_index(pool_alloc, new_first);
 
@@ -115,6 +115,19 @@ void release_block(pool_alloc_t *pool_alloc, void *block) {
         index_to_offset(new_first_index, pool_alloc->first_index)
     };
     pool_alloc->first_index = new_first_index;
+}
+
+void *pool_alloc(pool_alloc_t *pool_alloc) {
+    pool_block_t *first_block = consume_first_block(pool_alloc);
+    return first_block;
+}
+
+void pool_free(pool_alloc_t *pool_alloc, void *ptr) {
+    if (ptr == NULL) {
+        return;
+    }
+    pool_block_t *block = ptr;
+    release_block(pool_alloc, block);
 }
 
 void pool_test() {
@@ -226,6 +239,61 @@ void pool_test() {
         assert(block_2 ==
             get_block(&alloc, offset_to_index(
                 get_index(&alloc, block_3), block_3->next_offset)));
+
+        assert(delete_pool_alloc(alloc) == 0);
+    }
+
+    // alloc/free
+
+    {
+        pool_alloc_t alloc = new_pool_alloc(sizeof(int));
+
+        {
+            int *ints[PAGE_LEN];
+            for (int i = 0; i < PAGE_LEN; i++) {
+                ints[i] = pool_alloc(&alloc);
+                if (ints[i] != NULL) {
+                    *ints[i] = i;
+                }
+            }
+
+            int *null = pool_alloc(&alloc);
+            assert(null == NULL);
+
+            for (int i = PAGE_LEN; i >= 0; i--) {
+                if (ints[i] != NULL) {
+                    assert(*ints[i] == i);
+                }
+                pool_free(&alloc, ints[i]);
+            }
+        }
+
+        {
+            int *ints[PAGE_LEN];
+            for (int i = 0; i < 30; i++) {
+                ints[i] = pool_alloc(&alloc);
+                assert(ints[i] != NULL);
+                *ints[i] = 1 << i;
+            }
+
+            for (int i = 29; i >= 15; i--) {
+                assert(ints[i] != NULL);
+                assert(*ints[i] == 1 << i);
+                pool_free(&alloc, ints[i]);
+            }
+
+            for (int i = 15; i < 30; i++) {
+                ints[i] = pool_alloc(&alloc);
+                assert(ints[i] != NULL);
+                *ints[i] = 1 << i;
+            }
+
+            for (int i = 0; i < 30; i++) {
+                assert(ints[i] != NULL);
+                assert(*ints[i] == 1 << i);
+                pool_free(&alloc, ints[i]);
+            }
+        }
 
         assert(delete_pool_alloc(alloc) == 0);
     }

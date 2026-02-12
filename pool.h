@@ -20,8 +20,8 @@ bool new_pool_alloc_failed(pool_alloc_t const *pool_alloc);
 
 int delete_pool_alloc(pool_alloc_t pool_alloc);
 
-void *pool_alloc(pool_alloc_t *alloc, size_t len);
+void *pool_alloc(pool_alloc_t *pool_alloc);
 
-void pool_free(pool_alloc_t *alloc, void *ptr);
+void pool_free(pool_alloc_t *pool_alloc, void *ptr);
 
 void pool_test();
