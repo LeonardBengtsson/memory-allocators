@@ -1,7 +1,7 @@
 #include <stdio.h>
 
-#include "buddy.h"
-#include "pool.h"
+#include "alloc/buddy.h"
+#include "alloc/pool.h"
 
 int main(void) {
     printf("Buddy allocator tests...\n");
