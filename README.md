@@ -1,4 +1,4 @@
-# leben-allocators
+# memory-allocators
 
 Implementations of two standard memory allocator types.
 
